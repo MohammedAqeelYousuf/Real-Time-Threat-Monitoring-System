@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerability Data Viewer</title>
+     <style>
+        /* General Styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom right, #0f6e58, #006699); /* Sleek gradient background */
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.95); /* Light transparent white */
+            border-radius: 20px;
+            padding: 50px;
+            width: 100%;
+            max-width: 900px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); /* Soft shadow for depth */
+            text-align: center;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .container:hover {
+            transform: scale(1.05); /* Slight zoom-in effect */
+        }
+        #urlForm>label
+        {
+            color: black;
+        }
+        h1 {
+            color: #007BFF;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Input and Button Styling */
+        input, button {
+            width: 100%;
+            padding: 18px;
+            margin: 12px 0;
+            font-size: 16px;
+            border-radius: 12px;
+            border: 2px solid #ddd;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input {
+            background-color: #f3f3f3;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #007BFF;
+            background-color: #fff;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px); /* Button lift effect */
+        }
+
+        button:active {
+            transform: translateY(2px); /* Button pressed effect */
+        }
+
+        /* Message Styling */
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* View Buttons Styling */
+        .view-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .view-buttons button {
+            width: 48%;
+            background-color: #28a745;
+            transition: background-color 0.3s ease;
+        }
+
+        .view-buttons button:hover {
+            background-color: #218838;
+        }
+
+        /* Responsive Styling */
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .view-buttons button {
+                width: 100%;
+                margin-bottom: 15px;
+            }
+
+            input, button {
+                padding: 15px;
+                font-size: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .container {
+                padding: 25px;
+                width: 90%;
+            }
+
+            input, button {
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vulnerability Severity Predictor </h1>
+
+        <!-- URL Input Form -->
+        <form id="urlForm">
+            <label for="url">Enter URL for Scraping</label>
+            <input type="text" id="url" placeholder="e.g., https://example.html" required>
+            <button type="submit">Scrape Data</button>
+        </form>
+
+        <!-- Buttons to View Results -->
+        <button id="viewScrapedData">View Scraped Data</button>
+        <button id="viewPredictedData">View Predicted Data</button>
+
+        <div id="message" class="message" style="display: none;"></div>
+    </div>
+
+    <script>
+        const urlForm = document.getElementById('urlForm');
+        const viewScrapedData = document.getElementById('viewScrapedData');
+        const viewPredictedData = document.getElementById('viewPredictedData');
+        const messageDiv = document.getElementById('message');
+
+        // Handle URL submission for scraping
+        urlForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('url').value;
+
+            try {
+                const response = await fetch('/scrape', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const result = await response.json();
+                messageDiv.style.display = 'block';
+                messageDiv.textContent = result.message || result.error;
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.textContent = 'Error: Could not complete the request.';
+            }
+        });
+
+        // View scraped data
+        viewScrapedData.addEventListener('click', () => {
+            window.location.href = "/results?type=scraped";
+        });
+
+        // View predicted data
+        viewPredictedData.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/predict', { method: 'POST' });
+                const result = await response.json();
+
+                if (result.message) {
+                    window.location.href = "/results?type=predicted";
+                } else {
+                    messageDiv.style.display = 'block';
+                    messageDiv.textContent = result.error;
+                }
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.textContent = 'Error: Could not complete the request.';
+            }
+        });
+    </script>
+</body>
+</html>
